@@ -110,7 +110,7 @@ func resourceUserCreate(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	log.Trace("created User: %+v", items[0])
+	log.Trace("created User: %s (id: %s)", items[0].Username, items[0].UserID)
 
 	d.SetId(items[0].UserID)
 
@@ -136,7 +136,7 @@ func userRead(d *schema.ResourceData, m interface{}, params zabbix.Params) error
 	}
 	t := Users[0]
 
-	log.Debug("Got User: %+v", t)
+	log.Debug("Got User: %s (id: %s)", t.Username, t.UserID)
 
 	d.SetId(t.UserID)
 	d.Set("username", t.Username)

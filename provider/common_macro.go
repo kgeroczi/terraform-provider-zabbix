@@ -27,6 +27,7 @@ var macroListSchema = &schema.Schema{
 			"value": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
+				Sensitive:    true,
 				ValidateFunc: validation.StringIsNotWhiteSpace,
 				Description:  "Macro Value",
 			},

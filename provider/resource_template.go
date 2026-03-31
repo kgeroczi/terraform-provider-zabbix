@@ -28,7 +28,7 @@ func resourceTemplate() *schema.Resource {
 					ValidateFunc: validation.StringMatch(regexp.MustCompile("^[0-9]+$"), "must be a numeric string"),
 				},
 				Required:    true,
-				Description: "Host Group IDs",
+				Description: "Template Group IDs",
 			},
 			"host": &schema.Schema{
 				Type:         schema.TypeString,
@@ -108,7 +108,7 @@ func resourceTemplateCreate(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	log.Trace("crated template: %+v", items[0])
+	log.Trace("created template: %s (id: %s)", items[0].Host, items[0].TemplateID)
 
 	d.SetId(items[0].TemplateID)
 
@@ -122,7 +122,7 @@ func dataTemplateRead(d *schema.ResourceData, m interface{}) error {
 		"filter":                map[string]interface{}{},
 		"selectMacros":          "extend",
 		"selectParentTemplates": "extend",
-		"selectGroups":          "extend",
+		"selectTemplateGroups":  "extend",
 	}
 
 	if v := d.Get("host").(string); v != "" {
@@ -136,7 +136,7 @@ func dataTemplateRead(d *schema.ResourceData, m interface{}) error {
 	if len(params["filter"].(map[string]interface{})) < 1 {
 		return errors.New("no filter parameters provided")
 	}
-	log.Debug("Lookup of template with: %#v", params)
+	log.Debug("Lookup of template")
 
 	return templateRead(d, m, params)
 }
@@ -149,7 +149,7 @@ func resourceTemplateRead(d *schema.ResourceData, m interface{}) error {
 		"templateids":           d.Id(),
 		"selectMacros":          "extend",
 		"selectParentTemplates": "extend",
-		"selectGroups":          "extend",
+		"selectTemplateGroups":  "extend",
 	})
 }
 
@@ -172,13 +172,13 @@ func templateRead(d *schema.ResourceData, m interface{}, params zabbix.Params) e
 	}
 	t := templates[0]
 
-	log.Debug("Got template: %+v", t)
+	log.Debug("Got template: %s (id: %s)", t.Host, t.TemplateID)
 
 	d.Set("description", t.Description)
 	d.Set("host", t.Host)
 	d.Set("name", t.Name)
 	d.Set("macro", flattenMacros(t.UserMacros))
-	d.Set("groups", flattenHostGroupIds(t.Groups))
+	d.Set("groups", flattenTemplateGroupIds(t.Groups))
 	d.Set("templates", flattenTemplateIds(t.ParentTemplates))
 	d.SetId(t.TemplateID)
 
@@ -191,7 +191,7 @@ func buildTemplateObject(d *schema.ResourceData) *zabbix.Template {
 		Description:     d.Get("description").(string),
 		Name:            d.Get("name").(string),
 		Host:            d.Get("host").(string),
-		Groups:          buildHostGroupIds(d.Get("groups").(*schema.Set)),
+		Groups:          buildTemplateGroupIds(d.Get("groups").(*schema.Set)),
 		LinkedTemplates: buildTemplateIds(d.Get("templates").(*schema.Set)),
 	}
 

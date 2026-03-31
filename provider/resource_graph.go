@@ -299,7 +299,7 @@ func resourceGraphCreate(prototype bool) schema.CreateFunc {
 			return err
 		}
 
-		log.Trace("created Graph: %+v", items[0])
+		log.Trace("created Graph: %s (id: %s)", items[0].Name, items[0].GraphID)
 
 		d.SetId(items[0].GraphID)
 
@@ -417,7 +417,7 @@ func resourceGraphRead(prototype bool) schema.ReadFunc {
 		}
 		t := graphs[0]
 
-		log.Debug("Got Graph: %+v", t)
+		log.Debug("Got Graph: %s (id: %s)", t.Name, t.GraphID)
 
 		d.SetId(t.GraphID)
 		d.Set("name", t.Name)

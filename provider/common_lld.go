@@ -72,6 +72,26 @@ var lldCommonSchema = map[string]*schema.Schema{
 		Default:      "30d",
 		Description:  "LLD Stale Item Lifetime",
 	},
+	"lifetime_type": &schema.Schema{
+		Type:         schema.TypeInt,
+		Optional:     true,
+		Default:      0,
+		Description:  "LLD Lifetime type. 0 - after the time period specified in lifetime; 1 - never; 2 - immediately.",
+		ValidateFunc: validation.IntBetween(0, 2),
+	},
+	"enabled_lifetime_type": &schema.Schema{
+		Type:         schema.TypeInt,
+		Optional:     true,
+		Default:      2,
+		Description:  "LLD Enabled Lifetime type. 0 - after the time period specified in enabled_lifetime; 1 - never disable; 2 - disable immediately.",
+		ValidateFunc: validation.IntBetween(0, 2),
+	},
+	"enabled_lifetime": &schema.Schema{
+		Type:        schema.TypeString,
+		Optional:    true,
+		Default:     "",
+		Description: "Time period after which an LLD entity that is no longer discovered will be disabled.",
+	},
 	"key": &schema.Schema{
 		Type:         schema.TypeString,
 		Description:  "LLD KEY",
@@ -240,7 +260,7 @@ func resourceLLDCreate(d *schema.ResourceData, m interface{}, c LLDHandler, r LL
 	// run custom function
 	c(d, m, lld)
 
-	log.Trace("preparing lld object for create/update: %#v", lld)
+	log.Trace("preparing lld object for create: %s (host: %s)", lld.Name, lld.HostID)
 
 	llds := []zabbix.LLDRule{*lld}
 
@@ -250,7 +270,7 @@ func resourceLLDCreate(d *schema.ResourceData, m interface{}, c LLDHandler, r LL
 		return err
 	}
 
-	log.Trace("created lld: %+v", llds[0])
+	log.Trace("created lld: %s (id: %s)", llds[0].Name, llds[0].ItemID)
 
 	d.SetId(llds[0].ItemID)
 
@@ -267,7 +287,7 @@ func resourceLLDUpdate(d *schema.ResourceData, m interface{}, c LLDHandler, r LL
 	// run custom function
 	c(d, m, lld)
 
-	log.Trace("preparing lld object for create/update: %#v", lld)
+	log.Trace("preparing lld object for update: %s (id: %s)", lld.Name, lld.ItemID)
 
 	llds := []zabbix.LLDRule{*lld}
 
@@ -306,7 +326,7 @@ func resourceLLDRead(d *schema.ResourceData, m interface{}, r LLDHandler) error 
 	}
 	lld := llds[0]
 
-	log.Debug("Got lld: %+v", lld)
+	log.Debug("Got lld: %s (id: %s)", lld.Name, lld.ItemID)
 
 	d.SetId(lld.ItemID)
 	d.Set("hostid", lld.HostID)
@@ -314,6 +334,9 @@ func resourceLLDRead(d *schema.ResourceData, m interface{}, r LLDHandler) error 
 	d.Set("name", lld.Name)
 	d.Set("delay", lld.Delay)
 	d.Set("lifetime", lld.LifeTime)
+	d.Set("lifetime_type", lld.LifetimeType)
+	d.Set("enabled_lifetime_type", lld.EnabledLifetimeType)
+	d.Set("enabled_lifetime", lld.EnabledLifetime)
 	d.Set("evaltype", LLD_EVALTYPE_REV[lld.Filter.EvalType])
 	d.Set("formula", lld.Filter.Formula)
 	d.Set("condition", flattenlldConditions(lld))
@@ -329,11 +352,14 @@ func resourceLLDRead(d *schema.ResourceData, m interface{}, r LLDHandler) error 
 // Build the base lld Object
 func buildLLDObject(d *schema.ResourceData) *zabbix.LLDRule {
 	lld := zabbix.LLDRule{
-		Key:      d.Get("key").(string),
-		HostID:   d.Get("hostid").(string),
-		Name:     d.Get("name").(string),
-		Delay:    d.Get("delay").(string),
-		LifeTime: d.Get("lifetime").(string),
+		Key:                 d.Get("key").(string),
+		HostID:              d.Get("hostid").(string),
+		Name:                d.Get("name").(string),
+		Delay:               d.Get("delay").(string),
+		LifeTime:            d.Get("lifetime").(string),
+		LifetimeType:        d.Get("lifetime_type").(int),
+		EnabledLifetimeType: d.Get("enabled_lifetime_type").(int),
+		EnabledLifetime:     d.Get("enabled_lifetime").(string),
 	}
 
 	lld.Preprocessors = lldGeneratePreprocessors(d)

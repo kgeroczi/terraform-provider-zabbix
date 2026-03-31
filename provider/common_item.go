@@ -77,15 +77,6 @@ var itemCommonSchema = map[string]*schema.Schema{
 		Required:     true,
 	},
 	"preprocessor": itemPreprocessorSchema,
-	"applications": &schema.Schema{
-		Type:        schema.TypeSet,
-		Description: "Application IDs to associate this item with",
-		Elem: &schema.Schema{
-			Type:         schema.TypeString,
-			ValidateFunc: validation.StringMatch(regexp.MustCompile("^[0-9]+$"), "must be a numeric string"),
-		},
-		Optional: true,
-	},
 	"tag": &schema.Schema{
 		Type:     schema.TypeSet,
 		Optional: true,
@@ -226,7 +217,7 @@ func resourceItemCreate(d *schema.ResourceData, m interface{}, c ItemHandler, r 
 	// run custom function
 	c(d, m, item)
 
-	log.Trace("preparing item object for create/update: %#v", item)
+	log.Trace("preparing item object for create: %s (host: %s)", item.Name, item.HostID)
 
 	items := []zabbix.Item{*item}
 
@@ -242,7 +233,7 @@ func resourceItemCreate(d *schema.ResourceData, m interface{}, c ItemHandler, r 
 		return err
 	}
 
-	log.Trace("created item: %+v", items[0])
+	log.Trace("created item: %s (id: %s)", items[0].Name, items[0].ItemID)
 
 	d.SetId(items[0].ItemID)
 
@@ -259,7 +250,7 @@ func resourceItemUpdate(d *schema.ResourceData, m interface{}, c ItemHandler, r 
 	// run custom function
 	c(d, m, item)
 
-	log.Trace("preparing item object for create/update: %#v", item)
+	log.Trace("preparing item object for update: %s (id: %s)", item.Name, item.ItemID)
 
 	items := []zabbix.Item{*item}
 
@@ -290,7 +281,6 @@ func resourceItemRead(d *schema.ResourceData, m interface{}, r ItemHandler, prot
 	params := zabbix.Params{
 		"itemids":             []string{d.Id()},
 		"selectPreprocessing": "extend",
-		"selectApplications":  "extend",
 		"selectTags":          "extend",
 	}
 
@@ -314,7 +304,7 @@ func resourceItemRead(d *schema.ResourceData, m interface{}, r ItemHandler, prot
 	}
 	item := items[0]
 
-	log.Debug("Got item: %+v", item)
+	log.Debug("Got item: %s (id: %s)", item.Name, item.ItemID)
 
 	d.SetId(item.ItemID)
 	d.Set("hostid", item.HostID)
@@ -328,11 +318,6 @@ func resourceItemRead(d *schema.ResourceData, m interface{}, r ItemHandler, prot
 		d.Set("ruleid", item.DiscoveryRule.ItemID)
 	}
 
-	applicationSet := schema.NewSet(schema.HashString, []interface{}{})
-	for _, v := range item.Applications {
-		applicationSet.Add(v)
-	}
-	d.Set("applications", applicationSet)
 	d.Set("tag", flattenTags(item.Tags))
 
 	// run custom
@@ -352,12 +337,6 @@ func buildItemObject(d *schema.ResourceData, api *zabbix.API, prototype bool) *z
 		ValueType: ITEM_VALUE_TYPES[d.Get("valuetype").(string)],
 	}
 	item.Preprocessors = itemGeneratePreprocessors(d)
-	apps := d.Get("applications").(*schema.Set).List()
-	lst := []string{}
-	for _, a := range apps {
-		lst = append(lst, a.(string))
-	}
-	item.Applications = lst
 	item.Tags = tagGenerate(d)
 
 	if v, ok := d.GetOk("trends"); ok {

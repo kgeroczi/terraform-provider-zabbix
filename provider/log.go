@@ -2,11 +2,7 @@ package provider
 
 import (
 	logger "log"
-	"os"
 )
-
-// this changes and no longer works if accessed later
-var stderr = os.Stderr
 
 type Log struct{}
 

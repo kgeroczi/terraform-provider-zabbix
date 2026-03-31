@@ -75,13 +75,29 @@ func resourceProxy() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "The preshared key, at least 32 hex digits. Required if tls_connect is set to \"PSK\", or tls_accept contains the \"PSK\" bit.",
 				//ValidateFunc: validation.StringIsNotWhiteSpace,
-				Optional: true,
+				Optional:  true,
+				Sensitive: true,
+			},
+			"allowed_addresses": &schema.Schema{
+				Type:        schema.TypeString,
+				Description: "Comma-delimited IP addresses or DNS names of active Zabbix proxy.",
+				Optional:    true,
 			},
 			"proxy_address": &schema.Schema{
 				Type:        schema.TypeString,
-				Description: "Comma-delimited IP addresses or DNS names of active Zabbix proxy.",
-				//ValidateFunc: validation.StringIsNotWhiteSpace,
-				Optional: true,
+				Description: "Deprecated: Use allowed_addresses instead.",
+				Deprecated:  "Use allowed_addresses instead",
+				Optional:    true,
+			},
+			"address": &schema.Schema{
+				Type:        schema.TypeString,
+				Description: "IP address or DNS name to connect to for passive proxies.",
+				Optional:    true,
+			},
+			"port": &schema.Schema{
+				Type:        schema.TypeString,
+				Description: "Port number to connect to for passive proxies. Default: 10051.",
+				Optional:    true,
 			},
 		},
 	}
@@ -120,7 +136,7 @@ func dataProxyRead(d *schema.ResourceData, m interface{}) error {
 	if len(params["filter"].(map[string]interface{})) < 1 {
 		return errors.New("no proxy lookup attribute")
 	}
-	log.Debug("performing data lookup with params: %#v", params)
+	log.Debug("performing proxy data lookup")
 
 	return proxyRead(d, m, params)
 }
@@ -140,7 +156,9 @@ func resourceProxyCreate(d *schema.ResourceData, m interface{}) error {
 		TLSSubject:     d.Get("tls_subject").(string),
 		TLSPSKIdentity: d.Get("tls_psk_identity").(string),
 		TLSPSK:         d.Get("tls_psk").(string),
-		ProxyAddress:   d.Get("proxy_address").(string),
+		AllowedAddresses: proxyGetAllowedAddresses(d),
+		Address:          d.Get("address").(string),
+		Port:             d.Get("port").(string),
 	}
 
 	proxies := []zabbix.Proxy{proxy}
@@ -151,7 +169,7 @@ func resourceProxyCreate(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	log.Trace("created Proxy: %+v", proxies[0])
+	log.Trace("created Proxy: %s (id: %s)", proxies[0].Name, proxies[0].ProxyID)
 
 	d.SetId(proxies[0].ProxyID)
 
@@ -162,7 +180,7 @@ func resourceProxyCreate(d *schema.ResourceData, m interface{}) error {
 func proxyRead(d *schema.ResourceData, m interface{}, params zabbix.Params) error {
 	api := m.(*zabbix.API)
 
-	log.Debug("Lookup of proxy with params %#v", params)
+	log.Debug("Lookup of proxy")
 
 	proxys, err := api.ProxiesGet(params)
 
@@ -179,7 +197,7 @@ func proxyRead(d *schema.ResourceData, m interface{}, params zabbix.Params) erro
 	}
 	proxy := proxys[0]
 
-	log.Debug("Got proxy: %+v", proxy)
+	log.Debug("Got proxy: %s (id: %s)", proxy.Name, proxy.ProxyID)
 
 	d.SetId(proxy.ProxyID)
 	d.Set("name", proxy.Name)
@@ -191,9 +209,19 @@ func proxyRead(d *schema.ResourceData, m interface{}, params zabbix.Params) erro
 	d.Set("tls_subject", proxy.TLSSubject)
 	d.Set("tls_psk_identity", proxy.TLSPSKIdentity)
 	d.Set("tls_psk", proxy.TLSPSK)
-	d.Set("proxy_address", proxy.ProxyAddress)
+	d.Set("allowed_addresses", proxy.AllowedAddresses)
+	d.Set("address", proxy.Address)
+	d.Set("port", proxy.Port)
 
 	return nil
+}
+
+// proxyGetAllowedAddresses returns allowed_addresses, falling back to deprecated proxy_address
+func proxyGetAllowedAddresses(d *schema.ResourceData) string {
+	if v, ok := d.GetOk("allowed_addresses"); ok {
+		return v.(string)
+	}
+	return d.Get("proxy_address").(string)
 }
 
 // resourceProxyRead terraform resource read handler
@@ -220,7 +248,9 @@ func resourceProxyUpdate(d *schema.ResourceData, m interface{}) error {
 		TLSSubject:     d.Get("tls_subject").(string),
 		TLSPSKIdentity: d.Get("tls_psk_identity").(string),
 		TLSPSK:         d.Get("tls_psk").(string),
-		ProxyAddress:   d.Get("proxy_address").(string),
+		AllowedAddresses: proxyGetAllowedAddresses(d),
+		Address:          d.Get("address").(string),
+		Port:             d.Get("port").(string),
 	}
 
 	proxies := []zabbix.Proxy{proxy}

@@ -62,7 +62,7 @@ func resourceHostgroupCreate(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	log.Trace("created hostgroup: %+v", items[0])
+	log.Trace("created hostgroup: %s (id: %s)", items[0].Name, items[0].GroupID)
 
 	d.SetId(items[0].GroupID)
 
@@ -88,7 +88,7 @@ func hostgroupRead(d *schema.ResourceData, m interface{}, params zabbix.Params) 
 	}
 	t := hostgroups[0]
 
-	log.Debug("Got hostgroup: %+v", t)
+	log.Debug("Got hostgroup: %s (id: %s)", t.Name, t.GroupID)
 
 	d.SetId(t.GroupID)
 	d.Set("name", t.Name)

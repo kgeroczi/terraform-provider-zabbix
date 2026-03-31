@@ -490,7 +490,7 @@ func hostGenerateInterfaces(d *schema.ResourceData, m interface{}) (interfaces z
 			interfaces[i].InterfaceID = str
 		}
 
-		log.Debug("interface config abc: %+v", api.Config)
+		log.Debug("interface config version: %d", api.Config.Version)
 		// version 5 and snmp
 		if api.Config.Version >= 50000 && typeId == zabbix.SNMP {
 			details := zabbix.HostInterfaceDetail{}
@@ -546,7 +546,6 @@ func hostGenerateInventory(d *schema.ResourceData) (zabbix.Inventory, error) {
 
 // buildHostObject create host struct
 func buildHostObject(d *schema.ResourceData, m interface{}) (*zabbix.Host, error) {
-	api := m.(*zabbix.API)
 	proxyId := d.Get("proxyid").(string)
 	item := zabbix.Host{
 		Host:          d.Get("host").(string),
@@ -555,16 +554,12 @@ func buildHostObject(d *schema.ResourceData, m interface{}) (*zabbix.Host, error
 		InventoryMode: HINV_LOOKUP[d.Get("inventory_mode").(string)],
 		Status:        0,
 	}
-	if api.Config.Version < 70000 {
-		item.ProxyHostID = proxyId
-	} else {
-		item.ProxyID = proxyId
-	}
+	item.ProxyID = proxyId
 	if !d.Get("enabled").(bool) {
 		item.Status = 1
 	}
 
-	item.GroupIds = buildHostGroupIds(d.Get("groups").(*schema.Set))
+	item.HostGroupIds = buildHostGroupIds(d.Get("groups").(*schema.Set))
 	item.TemplateIDs = buildTemplateIds(d.Get("templates").(*schema.Set))
 
 	interfaces, err := hostGenerateInterfaces(d, m)
@@ -587,7 +582,7 @@ func buildHostObject(d *schema.ResourceData, m interface{}) (*zabbix.Host, error
 		return nil, errors.New("inventory_mode must be enabled for inventory to be used")
 	}
 
-	log.Trace("build host object: %#v", item)
+	log.Trace("build host object: %s", item.Host)
 
 	return &item, nil
 }
@@ -610,7 +605,7 @@ func resourceHostCreate(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	log.Trace("created host: %+v", items[0])
+	log.Trace("created host: %s (id: %s)", items[0].Host, items[0].HostID)
 
 	d.SetId(items[0].HostID)
 
@@ -622,7 +617,7 @@ func dataHostRead(d *schema.ResourceData, m interface{}) error {
 	params := zabbix.Params{
 		"selectInterfaces":      "extend",
 		"selectParentTemplates": "extend",
-		"selectGroups":          "extend",
+		"selectHostGroups":      "extend",
 		"selectMacros":          "extend",
 		"selectTags":            "extend",
 		"selectInventory":       "extend",
@@ -639,45 +634,31 @@ func dataHostRead(d *schema.ResourceData, m interface{}) error {
 	if len(params["filter"].(map[string]interface{})) < 1 {
 		return errors.New("no host lookup attribute")
 	}
-	log.Debug("performing data lookup with params: %#v", params)
+	log.Debug("performing data lookup with filter")
 
 	return hostRead(d, m, params)
 }
 
 // resourceHostRead read handler for resource
 func resourceHostRead(d *schema.ResourceData, m interface{}) error {
-	api := m.(*zabbix.API)
-	log.Debug("Lookup of hostgroup with id %s", d.Id())
+	log.Debug("Lookup of host with id %s", d.Id())
 
-	if api.Config.Version < 70000 {
-		return hostRead(d, m, zabbix.Params{
-			"selectInterfaces":      "extend",
-			"selectParentTemplates": "extend",
-			"selectGroups":          "extend",
-			"selectMacros":          "extend",
-			"selectTags":            "extend",
-			"selectInventory":       "extend",
-			"hostids":               d.Id(),
-		})
-	} else {
-		return hostRead(d, m, zabbix.Params{
-			"selectInterfaces":      "extend",
-			"selectParentTemplates": "extend",
-			"selectHostGroups":      "extend",
-			"selectMacros":          "extend",
-			"selectTags":            "extend",
-			"selectInventory":       "extend",
-			"hostids":               d.Id(),
-		})
-	}
-
+	return hostRead(d, m, zabbix.Params{
+		"selectInterfaces":      "extend",
+		"selectParentTemplates": "extend",
+		"selectHostGroups":      "extend",
+		"selectMacros":          "extend",
+		"selectTags":            "extend",
+		"selectInventory":       "extend",
+		"hostids":               d.Id(),
+	})
 }
 
 // hostRead common host read function
 func hostRead(d *schema.ResourceData, m interface{}, params zabbix.Params) error {
 	api := m.(*zabbix.API)
 
-	log.Debug("Lookup of host with params %#v", params)
+	log.Debug("Lookup of host")
 
 	hosts, err := api.HostsGet(params)
 
@@ -694,7 +675,7 @@ func hostRead(d *schema.ResourceData, m interface{}, params zabbix.Params) error
 	}
 	host := hosts[0]
 
-	log.Debug("Got host: %+v", host)
+	log.Debug("Got host: %s (id: %s)", host.Host, host.HostID)
 
 	d.SetId(host.HostID)
 	d.Set("name", host.Name)
@@ -702,19 +683,11 @@ func hostRead(d *schema.ResourceData, m interface{}, params zabbix.Params) error
 	d.Set("monitored_by", host.MonitoredBy)
 	d.Set("enabled", host.Status == 0)
 	d.Set("inventory_mode", HINV_LOOKUP_REV[host.InventoryMode])
-	if api.Config.Version < 70000 {
-		d.Set("proxyid", host.ProxyHostID)
-	} else {
-		d.Set("proxyid", host.ProxyID)
-	}
+	d.Set("proxyid", host.ProxyID)
 	d.Set("interface", flattenHostInterfaces(host, d, m))
 	d.Set("templates", flattenTemplateIds(host.ParentTemplateIDs))
 	d.Set("inventory", flattenInventory(host))
-	if api.Config.Version < 70000 {
-		d.Set("groups", flattenHostGroupIds(host.GroupIds))
-	} else {
-		d.Set("groups", flattenHostGroupIds(host.HostGroupIds))
-	}
+	d.Set("groups", flattenHostGroupIds(host.HostGroupIds))
 	d.Set("macro", flattenMacros(host.UserMacros))
 	d.Set("tag", flattenTags(host.Tags))
 
@@ -768,7 +741,7 @@ func flattenHostInterfaces(host zabbix.Host, d *schema.ResourceData, m interface
 
 		// need to handle detail
 		details := host.Interfaces[i].Details
-		log.Debug("got details: %+v", details)
+		log.Debug("got interface details for type: %s", params["type"])
 		if api.Config.Version >= 50000 && params["type"] == "snmp" && details != nil {
 			log.Debug("interface new logic")
 			params["snmp_version"] = details.Version
@@ -787,7 +760,7 @@ func flattenHostInterfaces(host zabbix.Host, d *schema.ResourceData, m interface
 			}
 		}
 
-		log.Debug("Got host interface: %+v", params)
+		log.Debug("Got host interface type: %s", params["type"])
 		val[i] = params
 	}
 	return val

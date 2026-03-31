@@ -22,13 +22,15 @@ func TestAccResourceHost(t *testing.T) {
 			{
 				Config: testAccResourceHostWithInventory(),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("zabbix_host.testhost2", "inventory_location", "test location A"),
+					resource.TestCheckResourceAttr("zabbix_host.testhost2", "inventory_mode", "manual"),
+					resource.TestCheckResourceAttr("zabbix_host.testhost2", "inventory.0.location", "test location A"),
 				),
 			},
 			{
 				Config: testAccResourceHostWithInventoryUpdate(),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("zabbix_host.testhost2", "inventory_location", "test location B"),
+					resource.TestCheckResourceAttr("zabbix_host.testhost2", "inventory_mode", "manual"),
+					resource.TestCheckResourceAttr("zabbix_host.testhost2", "inventory.0.location", "test location B"),
 				),
 			},
 		},
@@ -38,7 +40,7 @@ func TestAccResourceHost(t *testing.T) {
 func testAccResourceHostBasic() string {
 	return `
 resource "zabbix_hostgroup" "testgrp" {
-	name = "test-group" 
+	name = "test-group"
 }
 resource "zabbix_host" "testhost" {
 	host   = "test-host"
@@ -54,7 +56,7 @@ resource "zabbix_host" "testhost" {
 func testAccResourceHostWithInventory() string {
 	return `
 resource "zabbix_hostgroup" "testgrp2" {
-	name = "test-group2" 
+	name = "test-group2"
 }
 resource "zabbix_host" "testhost2" {
 	host   = "test-host2"
@@ -63,7 +65,10 @@ resource "zabbix_host" "testhost2" {
 		type = "snmp"
 		ip   = "127.0.0.1"
 	}
-    inventory_location = "test location A"
+	inventory_mode = "manual"
+	inventory {
+		location = "test location A"
+	}
 }
 `
 }
@@ -71,7 +76,7 @@ resource "zabbix_host" "testhost2" {
 func testAccResourceHostWithInventoryUpdate() string {
 	return `
 resource "zabbix_hostgroup" "testgrp2" {
-	name = "test-group2" 
+	name = "test-group2"
 }
 resource "zabbix_host" "testhost2" {
 	host   = "test-host2"
@@ -80,7 +85,10 @@ resource "zabbix_host" "testhost2" {
 		type = "snmp"
 		ip   = "127.0.0.1"
 	}
-    inventory_location = "test location B"
+	inventory_mode = "manual"
+	inventory {
+		location = "test location B"
+	}
 }
 `
 }

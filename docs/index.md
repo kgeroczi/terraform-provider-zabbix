@@ -2,30 +2,38 @@
 page_title: "zabbix Provider"
 subcategory: ""
 description: |-
-  The Zabbix provider provides resources to interact with a Zabbix Monitoring Server.  
+  The Zabbix provider provides resources to interact with a Zabbix Monitoring Server.
 ---
 
 # zabbix Provider
 
-The Zabbix provider provides resources to interact with a Zabbix Monitoring Server.  
+The Zabbix provider provides resources to interact with a Zabbix Monitoring Server.
+
+Requires Zabbix 7.0 or later. Supports authentication via username/password or API token.
 
 ## Example Usage
 
 ```terraform
+# Option 1: Username/Password authentication
 provider "zabbix" {
-  # Required
   username = "<api_user>"
   password = "<api_password>"
   url = "http://example.com/api_jsonrpc.php"
-  
+
   # Optional
 
-  # Disable TLS verfication (false by default)
+  # Disable TLS verification (false by default)
   tls_insecure = true
 
   # Serialize Zabbix API calls (false by default)
   # Note: race conditions have been observed, enable this if required
   serialize = true
+}
+
+# Option 2: API Token authentication
+provider "zabbix" {
+  token = "<api_token>"
+  url   = "http://example.com/api_jsonrpc.php"
 }
 ```
 
@@ -34,11 +42,12 @@ provider "zabbix" {
 
 ### Required
 
-- **password** (String) Zabbix API password
 - **url** (String) Zabbix API url
-- **username** (String) Zabbix API username
 
 ### Optional
 
+- **username** (String) Zabbix API username
+- **password** (String, Sensitive) Zabbix API password
+- **token** (String, Sensitive) Zabbix API token. If set, username/password are not used.
 - **serialize** (Boolean) Serialize API requests, if required due to API race conditions
 - **tls_insecure** (Boolean) Disable TLS certificate checking (for testing use only)

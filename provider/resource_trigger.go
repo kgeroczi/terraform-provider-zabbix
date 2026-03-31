@@ -220,7 +220,7 @@ func resourceTriggerCreate(prototype bool) schema.CreateFunc {
 			return err
 		}
 
-		log.Trace("crated trigger: %+v", items[0])
+		log.Trace("created trigger: %s (id: %s)", items[0].Description, items[0].TriggerID)
 
 		d.SetId(items[0].TriggerID)
 
@@ -264,7 +264,7 @@ func resourceTriggerRead(prototype bool) schema.ReadFunc {
 		}
 		t := triggers[0]
 
-		log.Debug("Got trigger: %+v", t)
+		log.Debug("Got trigger: %s (id: %s)", t.Description, t.TriggerID)
 
 		d.Set("name", t.Description)
 		d.Set("expression", t.Expression)

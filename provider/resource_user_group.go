@@ -65,6 +65,25 @@ func resourceUserGroup() *schema.Resource {
 					},
 				},
 			},
+			"template_permission": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Computed:    true,
+				Description: "Template group permissions",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"id": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"permission": {
+							Type:         schema.TypeInt,
+							ValidateFunc: validation.IntBetween(0, 3),
+							Required:     true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -73,6 +92,22 @@ func resourceHostGroupPermissionsV1(d *schema.ResourceData) []zabbix.UserGroupPe
 	var permissionsRequests []zabbix.UserGroupPermission
 
 	permissions := d.Get("host_permission").([]interface{})
+	for i := range permissions {
+		permission := permissions[i].(map[string]interface{})
+		permissionsRequest := zabbix.UserGroupPermission{
+			ID:         permission["id"].(string),
+			Permission: permission["permission"].(int),
+		}
+
+		permissionsRequests = append(permissionsRequests, permissionsRequest)
+	}
+	return permissionsRequests
+}
+
+func resourceTemplateGroupPermissionsV1(d *schema.ResourceData) []zabbix.UserGroupPermission {
+	var permissionsRequests []zabbix.UserGroupPermission
+
+	permissions := d.Get("template_permission").([]interface{})
 	for i := range permissions {
 		permission := permissions[i].(map[string]interface{})
 		permissionsRequest := zabbix.UserGroupPermission{
@@ -110,7 +145,8 @@ func resourceUserGroupCreate(d *schema.ResourceData, m interface{}) error {
 		DebugMode:   d.Get("debug_mode").(int),
 		GUIAccess:   d.Get("gui_access").(int),
 		Status:      d.Get("status").(int),
-		Permissions: resourceHostGroupPermissionsV1(d),
+		Permissions:              resourceHostGroupPermissionsV1(d),
+		TemplateGroupPermissions: resourceTemplateGroupPermissionsV1(d),
 	}
 
 	items := []zabbix.UserGroup{item}
@@ -121,7 +157,7 @@ func resourceUserGroupCreate(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	log.Trace("created UserGroup: %+v", items[0])
+	log.Trace("created UserGroup: %s (id: %s)", items[0].Name, items[0].UserGroupID)
 
 	d.SetId(items[0].UserGroupID)
 
@@ -147,7 +183,7 @@ func userGroupRead(d *schema.ResourceData, m interface{}, params zabbix.Params) 
 	}
 	t := UserGroups[0]
 
-	log.Debug("Got UserGroup: %+v", t)
+	log.Debug("Got UserGroup: %s (id: %s)", t.Name, t.UserGroupID)
 
 	d.SetId(t.UserGroupID)
 	d.Set("name", t.Name)
@@ -186,7 +222,8 @@ func resourceUserGroupUpdate(d *schema.ResourceData, m interface{}) error {
 		DebugMode:   d.Get("debug_mode").(int),
 		GUIAccess:   d.Get("gui_access").(int),
 		Status:      d.Get("status").(int),
-		Permissions: resourceHostGroupPermissionsV1(d),
+		Permissions:              resourceHostGroupPermissionsV1(d),
+		TemplateGroupPermissions: resourceTemplateGroupPermissionsV1(d),
 	}
 
 	items := []zabbix.UserGroup{item}

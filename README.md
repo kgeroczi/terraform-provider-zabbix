@@ -13,7 +13,7 @@ A [Terraform](terraform.io) provider for [Zabbix](https://www.zabbix.com)
 * [zabbix_host](#datazabbix_host)
 * [zabbix_hostgroup](#datazabbix_hostgroup)
 * [zabbix_template](#datazabbix_template)
-* [zabbix_application](#datazabbix_application)
+* [zabbix_template_group](#datazabbix_template_group)
 * [zabbix_proxy](#datazabbix_proxy)
 
 ## Resources
@@ -21,7 +21,7 @@ A [Terraform](terraform.io) provider for [Zabbix](https://www.zabbix.com)
 * [zabbix_host](#zabbix_host)
 * [zabbix_hostgroup](#zabbix_hostgroup)
 * [zabbix_template](#zabbix_template)
-* [zabbix_application](#zabbix_application)
+* [zabbix_template_group](#zabbix_template_group)
 * [zabbix_graph / zabbix_proto_graph](#zabbix_graph--zabbix_proto_graph)
 * [zabbix_trigger / zabbix_proto_trigger](#zabbix_trigger--zabbix_proto_trigger)
 * [zabbix_item_agent / zabbix_proto_item_agent](#zabbix_item_agent--zabbix_proto_item_agent)
@@ -29,7 +29,6 @@ A [Terraform](terraform.io) provider for [Zabbix](https://www.zabbix.com)
 * [zabbix_item_simple / zabbix_proto_item_simple](#zabbix_item_simple--zabbix_proto_item_simple)
 * [zabbix_item_http / zabbix_proto_item_http](#zabbix_item_http--zabbix_proto_item_http)
 * [zabbix_item_trapper / zabbix_proto_item_trapper](#zabbix_item_trapper--zabbix_proto_item_trapper)
-* [zabbix_item_aggregate / zabbix_proto_item_aggregate](#zabbix_item_aggregate--zabbix_proto_item_aggregate)
 * [zabbix_item_external / zabbix_proto_item_external](#zabbix_item_external--zabbix_proto_item_external)
 * [zabbix_item_internal / zabbix_proto_item_internal](#zabbix_item_internal--zabbix_proto_item_internal)
 * [zabbix_item_dependent / zabbix_proto_item_dependent](#zabbix_item_dependent--zabbix_proto_item_dependent)
@@ -46,6 +45,7 @@ A [Terraform](terraform.io) provider for [Zabbix](https://www.zabbix.com)
 
 # Requirements
 
+- Zabbix 7.0 or later
 - Access to Zabbix API over http or https
 
 # Using the provider
@@ -60,7 +60,17 @@ This integration is not feature complete and covers a limited set of Zabbix feat
 
 # Testing
 
-No Testing has yet been added to this repository
+A GitHub Actions CI workflow runs `go vet` and `go build` automatically on push/PR. Acceptance tests require a live Zabbix instance and are gated behind the `ZABBIX_URL` environment variable.
+
+To run acceptance tests locally:
+
+```bash
+export ZABBIX_URL=http://localhost:8080/zabbix/api_jsonrpc.php
+export ZABBIX_USER=Admin
+export ZABBIX_PASSWORD=zabbix
+export TF_ACC=1
+go test -v ./provider/...
+```
 
 # Usage
 
@@ -72,25 +82,40 @@ The script `utils/template2terraform` provides the capabilities to convert (some
 
 ## Provider
 
-Instantiate an instance of the provider.
+Instantiate an instance of the provider. Authentication is supported via username/password or API token.
 
-```
+```hcl
+# Option 1: Username/Password authentication
 provider "zabbix" {
-  # Required
   username = "<api_user>"
   password = "<api_password>"
   url = "http://example.com/api_jsonrpc.php"
-  
+
   # Optional
 
-  # Disable TLS verfication (false by default)
+  # Disable TLS verification (false by default)
   tls_insecure = true
 
   # Serialize Zabbix API calls (false by default)
   # Note: race conditions have been observed, enable this if required
   serialize = true
 }
+
+# Option 2: API Token authentication
+provider "zabbix" {
+  token = "<api_token>"
+  url   = "http://example.com/api_jsonrpc.php"
+}
 ```
+
+#### Provider Argument Reference
+
+* url - (Required) Zabbix API endpoint URL. Env: `ZABBIX_URL`, `ZABBIX_SERVER_URL`
+* username - (Optional) API username. Required if `token` is not set. Env: `ZABBIX_USER`, `ZABBIX_USERNAME`
+* password - (Optional, Sensitive) API password. Required if `token` is not set. Env: `ZABBIX_PASS`, `ZABBIX_PASSWORD`
+* token - (Optional, Sensitive) API token. If set, username/password are not used. Env: `ZABBIX_TOKEN`, `ZABBIX_API_TOKEN`
+* tls_insecure - (Optional) Disable TLS certificate verification. Default: false
+* serialize - (Optional) Serialize API requests. Default: false
 
 ## Data Sources
 
@@ -174,24 +199,22 @@ data "zabbix_template" "example" {
     * macro.#.name - Macro name
     * macro.#.value - Macro value
 
-### data.zabbix_application
+### data.zabbix_template_group
+[index](#index)
 
 ```hcl
-data "zabbix_template" "example" {
-  name = "Friendly Name"
-  hostid = "1245"
+data "zabbix_template_group" "example" {
+  name = "Templates"
 }
 ```
 
 #### Argument Reference
 
-* name - (Required) Name of template
-* hostid - (Optional) ID of host / template
+* name - (Required) Name of template group
 
 #### Attributes Reference
 
-* name - Name of Template
-* hostid - ID of host / template
+* name - Name of template group
 
 ### data.zabbix_proxy
 [index](#index)
@@ -353,25 +376,6 @@ Same as arguments, plus:
 
 * macro.#.id - Generated macro ID
 
-### zabbix_application
-[index](#index)
-
-```hcl
-resource "zabbix_application" "example" {
-  name = "Application Name"
-  hostid = "1234"
-}
-```
-
-#### Argument Reference
-
-* name - (Required) Name of application
-* hostid - (Required) ID of host / template
-
-#### Attributes Reference
-
-Same as arguments
-
 ### zabbix_graph / zabbix_proto_graph
 [index](#index)
 
@@ -520,7 +524,7 @@ resource "zabbix_item_agent" "example" {
 
   # only for proto_item
   ruleid = "8989"
-  applications = [ "4567" ]
+
 
   interfaceid = "5678"
 
@@ -552,7 +556,7 @@ resource "zabbix_item_agent" "example" {
     * error_handler_params - (Optional) error handler params (see above docs, only relevent in > 4.0)
 * active - (Optional) zabbix active agent (defaults to false)
 * ruleid - (Required for proto_item) LLD Discovery rule ID to attach prototype item to
-* applications - (Optional) list of application IDs to associate
+
 
 #### Attributes Reference
 
@@ -574,7 +578,7 @@ resource "zabbix_item_snmp" "example" {
   # only for proto_item
   ruleid = "8989"
 
-  applications = [ "4567" ]
+
 
   preprocessor {
     type = "5"
@@ -613,7 +617,7 @@ resource "zabbix_item_snmp" "example" {
     * error_handler - (Optional) error handler type (see above docs, only relevent in > 4.0)
     * error_handler_params - (Optional) error handler params (see above docs, only relevent in > 4.0)
 * ruleid - (Required for proto_item) LLD Discovery rule ID to attach prototype item to
-* applications - (Optional) list of application IDs to associate
+
 * snmp_oid - (Required) SNMP OID Number
 
 The following only have an effect in zabbix versions < 5
@@ -647,7 +651,7 @@ resource "zabbix_item_simple" "example" {
   # only for proto_item
   ruleid = "8989"
 
-  applications = [ "4567" ]
+
 
   delay = "1m"
   history = "90d"
@@ -677,7 +681,7 @@ resource "zabbix_item_simple" "example" {
     * error_handler - (Optional) error handler type (see above docs, only relevent in > 4.0)
     * error_handler_params - (Optional) error handler params (see above docs, only relevent in > 4.0)
 * ruleid - (Required for proto_item) LLD Discovery rule ID to attach prototype item to
-* applications - (Optional) list of application IDs to associate
+
 
 #### Attributes Reference
 
@@ -699,7 +703,7 @@ resource "zabbix_item_http" "example" {
   # only for proto_item
   ruleid = "8989"
 
-  applications = [ "4567" ]
+
 
   delay = "1m"
   history = "90d"
@@ -757,7 +761,7 @@ resource "zabbix_item_http" "example" {
 * verify_host (Optional) TLS host verification, defaults to true
 * verify_peer (Optional) TLS peer verification, defaults to true
 * ruleid - (Required for proto_item) LLD Discovery rule ID to attach prototype item to
-* applications - (Optional) list of application IDs to associate
+
 * auth_type - (Optional) Authentication type, defaults to "none", one of none, basic, digest, ntlm, kerberos
 * username - (Optional) Username
 * password - (Optional) Password
@@ -782,7 +786,7 @@ resource "zabbix_item_trapper" "example" {
   # only for proto_item
   ruleid = "8989"
 
-  applications = [ "4567" ]
+
 
   preprocessor {
     type = "5"
@@ -807,58 +811,7 @@ resource "zabbix_item_trapper" "example" {
     * error_handler - (Optional) error handler type (see above docs, only relevent in > 4.0)
     * error_handler_params - (Optional) error handler params (see above docs, only relevent in > 4.0)
 * ruleid - (Required for proto_item) LLD Discovery rule ID to attach prototype item to
-* applications - (Optional) list of application IDs to associate
 
-#### Attributes Reference
-
-Same as arguments, plus:
-
-* preprocessor.#.id - Preprocessor assigned ID number
-
-### zabbix_item_aggregate / zabbix_proto_item_aggregate
-[index](#index)
-
-```hcl
-resource "zabbix_item_aggregate" "example" {
-  hostid = "1234"
-  key = "grpsum()"
-  name = "Item Name"
-  valuetype = "unsigned"
-
-  delay = "1m"
-  history = "90d"
-  trends = "365d"
-
-  # only for proto_item
-  ruleid = "8989"
-
-  applications = [ "4567" ]
-
-  preprocessor {
-    type = "5"
-    params = ["param a", "param b"]
-    error_handler = "1"
-    error_handler_params = ""
-  }
-}
-```
-
-#### Argument Reference
-
-* hostid - (Required) Host/Template ID to attach item to
-* key - (Required) Item Key
-* name - (Required) Item Name
-* valuetype - (Required) Item valuetype, one of: (float, character, log, unsigned, text)
-* delay - (Optional) Item collection interval, defaults to 1m
-* history - (Optional) Item retention period
-* trends - (Optional) Item trend period
-* preprocessor - (Optional) Item Preprocessors
-    * type - (Required) Preprocessor type [docs](https://www.zabbix.com/documentation/current/manual/api/reference/item/object)
-    * params - (Optional) Preprocessor params
-    * error_handler - (Optional) error handler type (see above docs, only relevent in > 4.0)
-    * error_handler_params - (Optional) error handler params (see above docs, only relevent in > 4.0)
-* ruleid - (Required for proto_item) LLD Discovery rule ID to attach prototype item to
-* applications - (Optional) list of application IDs to associate
 
 #### Attributes Reference
 
@@ -883,7 +836,7 @@ resource "zabbix_item_external" "example" {
   # only for proto_item
   ruleid = "8989"
   
-  applications = [ "4567" ]
+
 }
 ```
 
@@ -903,7 +856,7 @@ resource "zabbix_item_external" "example" {
     * error_handler - (Optional) error handler type (see above docs, only relevent in > 4.0)
     * error_handler_params - (Optional) error handler params (see above docs, only relevent in > 4.0)
 * ruleid - (Required for proto_item) LLD Discovery rule ID to attach prototype item to
-* applications - (Optional) list of application IDs to associate
+
 
 #### Attributes Reference
 
@@ -928,7 +881,7 @@ resource "zabbix_item_internal" "example" {
   # only for proto_item
   ruleid = "8989"
   
-  applications = [ "4567" ]
+
 
   interfaceid = "5678"
 
@@ -957,7 +910,7 @@ resource "zabbix_item_internal" "example" {
     * error_handler - (Optional) error handler type (see above docs, only relevent in > 4.0)
     * error_handler_params - (Optional) error handler params (see above docs, only relevent in > 4.0)
 * ruleid - (Required for proto_item) LLD Discovery rule ID to attach prototype item to
-* applications - (Optional) list of application IDs to associate
+
 
 #### Attributes Reference
 
@@ -980,7 +933,7 @@ resource "zabbix_item_dependent" "example" {
   # only for proto_item
   ruleid = "8989"
   
-  applications = [ "4567" ]
+
 
   preprocessor {
     type = "5"
@@ -1006,7 +959,7 @@ resource "zabbix_item_dependent" "example" {
     * error_handler - (Optional) error handler type (see above docs, only relevent in > 4.0)
     * error_handler_params - (Optional) error handler params (see above docs, only relevent in > 4.0)
 * ruleid - (Required for proto_item) LLD Discovery rule ID to attach prototype item to
-* applications - (Optional) list of application IDs to associate
+
 
 #### Attributes Reference
 
@@ -1029,7 +982,7 @@ resource "zabbix_item_dependent" "example" {
   # only for proto_item
   ruleid = "8989"
   
-  applications = [ "4567" ]
+
 
   preprocessor {
     type = "5"
@@ -1053,7 +1006,7 @@ resource "zabbix_item_dependent" "example" {
     * error_handler - (Optional) error handler type (see above docs, only relevent in > 4.0)
     * error_handler_params - (Optional) error handler params (see above docs, only relevent in > 4.0)
 * ruleid - (Required for proto_item) LLD Discovery rule ID to attach prototype item to
-* applications - (Optional) list of application IDs to associate
+
 
 #### Attributes Reference
 
@@ -1074,7 +1027,7 @@ resource "zabbix_item_snmptrap" "example" {
   # only for proto_item
   ruleid = "8989"
   
-  applications = [ "4567" ]
+
 
   preprocessor {
     type = "5"
@@ -1099,7 +1052,7 @@ resource "zabbix_item_snmptrap" "example" {
     * error_handler - (Optional) error handler type (see above docs, only relevent in > 4.0)
     * error_handler_params - (Optional) error handler params (see above docs, only relevent in > 4.0)
 * ruleid - (Required for proto_item) LLD Discovery rule ID to attach prototype item to
-* applications - (Optional) list of application IDs to associate
+
 
 #### Attributes Reference
 

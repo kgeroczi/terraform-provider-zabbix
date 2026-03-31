@@ -8,7 +8,7 @@ require (
 	github.com/hashicorp/terraform v0.12.23
 	github.com/hashicorp/terraform-plugin-sdk v1.17.2
 	github.com/hashicorp/vault v0.10.4
-	github.com/kgeroczi/go-zabbix-api v0.2.2
+	github.com/kgeroczi/go-zabbix-api v0.3.0
 )
 
 require (
@@ -127,4 +127,6 @@ require (
 	google.golang.org/protobuf v1.36.6 // indirect
 )
 
-//replace github.com/kgeroczi/go-zabbix-api => ../go-zabbix-api
+// Local development: use replace to validate against local go-zabbix-api changes.
+// Remove or update this before release.
+replace github.com/kgeroczi/go-zabbix-api => ../go-zabbix-api

@@ -1,8 +1,6 @@
 package provider
 
 import (
-	logger "log"
-
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/hashicorp/terraform/helper/hashcode"
@@ -27,6 +25,7 @@ func Provider() *schema.Provider {
 				Type:         schema.TypeString,
 				Required:     false,
 				Optional:     true,
+				Sensitive:    true,
 				Description:  "Zabbix API password",
 				ValidateFunc: validation.StringIsNotWhiteSpace,
 				DefaultFunc:  schema.MultiEnvDefaultFunc([]string{"ZABBIX_PASS", "ZABBIX_PASSWORD"}, nil),
@@ -35,6 +34,7 @@ func Provider() *schema.Provider {
 				Type:         schema.TypeString,
 				Required:     false,
 				Optional:     true,
+				Sensitive:    true,
 				Description:  "Zabbix API token",
 				ValidateFunc: validation.StringIsNotWhiteSpace,
 				DefaultFunc:  schema.MultiEnvDefaultFunc([]string{"ZABBIX_TOKEN", "ZABBIX_API_TOKEN"}, nil),
@@ -60,20 +60,20 @@ func Provider() *schema.Provider {
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"zabbix_host":        dataHost(),
-			"zabbix_application": dataApplication(),
-			"zabbix_proxy":       dataProxy(),
-			"zabbix_hostgroup":   dataHostgroup(),
-			"zabbix_template":    dataTemplate(),
-			"zabbix_user":        dataUser(),
+			"zabbix_host":           dataHost(),
+			"zabbix_proxy":          dataProxy(),
+			"zabbix_hostgroup":      dataHostgroup(),
+			"zabbix_template_group": dataTemplateGroup(),
+			"zabbix_template":       dataTemplate(),
+			"zabbix_user":           dataUser(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"zabbix_trigger":       resourceTrigger(),
 			"zabbix_proto_trigger": resourceProtoTrigger(),
 			"zabbix_template":      resourceTemplate(),
 			"zabbix_hostgroup":     resourceHostgroup(),
-			"zabbix_host":          resourceHost(),
-			"zabbix_application":   resourceApplication(),
+			"zabbix_host":           resourceHost(),
+			"zabbix_template_group": resourceTemplateGroup(),
 
 			"zabbix_graph":       resourceGraph(),
 			"zabbix_proto_graph": resourceProtoGraph(),
@@ -109,9 +109,6 @@ func Provider() *schema.Provider {
 			"zabbix_proto_item_agent": resourceProtoItemAgent(),
 			"zabbix_lld_agent":        resourceLLDAgent(),
 
-			"zabbix_item_aggregate":       resourceItemAggregate(),
-			"zabbix_proto_item_aggregate": resourceProtoItemAggregate(),
-
 			"zabbix_item_calculated":       resourceItemCalculated(),
 			"zabbix_proto_item_calculated": resourceProtoItemCalculated(),
 
@@ -131,12 +128,10 @@ func Provider() *schema.Provider {
 // providerConfigure configure this provider
 func providerConfigure(d *schema.ResourceData) (meta interface{}, err error) {
 	log.Trace("Started zabbix provider init")
-	l := logger.New(stderr, "[DEBUG] ", logger.LstdFlags)
 
 	api, apierr := zabbix.NewAPI(zabbix.Config{
 		Url:         d.Get("url").(string),
 		TlsNoVerify: d.Get("tls_insecure").(bool),
-		Log:         l,
 		Serialize:   d.Get("serialize").(bool),
 	})
 	if apierr != nil {

@@ -35,6 +35,28 @@ func buildHostGroupIds(s *schema.Set) zabbix.HostGroupIDs {
 	return groups
 }
 
+func flattenTemplateGroupIds(list zabbix.TemplateGroupIDs) *schema.Set {
+	s := schema.NewSet(schema.HashString, []interface{}{})
+	for _, v := range list {
+		s.Add(v.GroupID)
+	}
+	return s
+}
+
+func buildTemplateGroupIds(s *schema.Set) zabbix.TemplateGroupIDs {
+	list := s.List()
+
+	groups := make(zabbix.TemplateGroupIDs, len(list))
+
+	for i := 0; i < len(list); i++ {
+		groups[i] = zabbix.TemplateGroupID{
+			GroupID: list[i].(string),
+		}
+	}
+
+	return groups
+}
+
 func buildTriggerIds(s *schema.Set) zabbix.TriggerIDs {
 	list := s.List()
 
