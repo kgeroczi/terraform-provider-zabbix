@@ -129,4 +129,4 @@ require (
 
 // Local development: use replace to validate against local go-zabbix-api changes.
 // Remove or update this before release.
-replace github.com/kgeroczi/go-zabbix-api => ../go-zabbix-api
+//replace github.com/kgeroczi/go-zabbix-api => ../go-zabbix-api
