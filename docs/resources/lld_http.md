@@ -17,52 +17,58 @@ description: |-
 
 ### Required
 
-- **hostid** (String) Host ID
-- **key** (String) LLD KEY
-- **name** (String) LLD Name
-- **url** (String) url to probe
+- `hostid` (String) Host ID
+- `key` (String) LLD KEY
+- `name` (String) LLD Name
+- `url` (String) url to probe
 
 ### Optional
 
-- **auth_type** (String) HTTP auth type, one of: basic, ntlm, kerberos, none
-- **condition** (Block List) (see [below for nested schema](#nestedblock--condition))
-- **delay** (String) LLD Delay period
-- **evaltype** (String) EvalType, one of: or, custom, andor, and
-- **follow_redirects** (Boolean) follow http redirects
-- **formula** (String) Formula
-- **headers** (Map of String)
-- **id** (String) The ID of this resource.
-- **interfaceid** (String) Host Interface ID
-- **lifetime** (String) LLD Stale Item Lifetime
-- **macro** (Block Set) (see [below for nested schema](#nestedblock--macro))
-- **password** (String, Sensitive) Authentication Password
-- **post_type** (String) HTTP post type, one of: xml, raw, json
-- **posts** (String) POST data to send in request
-- **preprocessor** (Block List) (see [below for nested schema](#nestedblock--preprocessor))
-- **proxy** (String) HTTP proxy connection string
-- **request_method** (String) HTTP request method, one of: get, post, put, head
-- **retrieve_mode** (String) HTTP retrieve mode, one of: body, headers, both
-- **status_codes** (String) http status code
-- **timeout** (String) http request timeout
-- **username** (String) Authentication Username
-- **verify_host** (Boolean) https verify host
-- **verify_peer** (Boolean) https verify peer
+- `auth_type` (String) HTTP auth type, one of: none, basic, ntlm, kerberos
+- `condition` (Block List) (see [below for nested schema](#nestedblock--condition))
+- `delay` (String) LLD Delay period
+- `enabled_lifetime` (String) Time period after which an LLD entity that is no longer discovered will be disabled.
+- `enabled_lifetime_type` (Number) LLD Enabled Lifetime type. 0 - after the time period specified in enabled_lifetime; 1 - never disable; 2 - disable immediately.
+- `evaltype` (String) EvalType, one of: or, custom, andor, and
+- `follow_redirects` (Boolean) follow http redirects
+- `formula` (String) Formula
+- `headers` (Map of String)
+- `interfaceid` (String) Host Interface ID
+- `lifetime` (String) LLD Stale Item Lifetime
+- `lifetime_type` (Number) LLD Lifetime type. 0 - after the time period specified in lifetime; 1 - never; 2 - immediately.
+- `macro` (Block Set) (see [below for nested schema](#nestedblock--macro))
+- `password` (String, Sensitive) Authentication Password
+- `post_type` (String) HTTP post type, one of: raw, json, xml
+- `posts` (String) POST data to send in request
+- `preprocessor` (Block List) (see [below for nested schema](#nestedblock--preprocessor))
+- `proxy` (String) HTTP proxy connection string
+- `request_method` (String) HTTP request method, one of: post, put, head, get
+- `retrieve_mode` (String) HTTP retrieve mode, one of: body, headers, both
+- `status_codes` (String) http status code
+- `timeout` (String) http request timeout
+- `username` (String) Authentication Username
+- `verify_host` (Boolean) https verify host
+- `verify_peer` (Boolean) https verify peer
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
 
 <a id="nestedblock--condition"></a>
 ### Nested Schema for `condition`
 
 Required:
 
-- **macro** (String) Filter Macro
-- **value** (String) Filter Value
+- `macro` (String) Filter Macro
+- `value` (String) Filter Value
 
 Optional:
 
-- **operator** (String) Operator, one of: match, notmatch
+- `operator` (String) Operator, one of: match, notmatch
 
 Read-Only:
 
-- **id** (String) The ID of this resource.
+- `id` (String)
 
 
 <a id="nestedblock--macro"></a>
@@ -70,8 +76,8 @@ Read-Only:
 
 Required:
 
-- **macro** (String) Macro
-- **path** (String) Macro Path
+- `macro` (String) Macro
+- `path` (String) Macro Path
 
 
 <a id="nestedblock--preprocessor"></a>
@@ -79,16 +85,14 @@ Required:
 
 Required:
 
-- **type** (String) Preprocessor type, zabbix identifier number
+- `type` (String) Preprocessor type, zabbix identifier number
 
 Optional:
 
-- **error_handler** (String)
-- **error_handler_params** (String)
-- **params** (List of String) Preprocessor parameters
+- `error_handler` (String)
+- `error_handler_params` (String)
+- `params` (List of String) Preprocessor parameters
 
 Read-Only:
 
-- **id** (String) The ID of this resource.
-
-
+- `id` (String)

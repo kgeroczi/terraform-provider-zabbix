@@ -3,8 +3,8 @@ package provider
 import (
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/kgeroczi/go-zabbix-api"
 )
 
@@ -28,10 +28,10 @@ var SNMP_AUTHPROTO_REV = map[string]string{}
 var SNMP_AUTHPROTO_ARR = []string{}
 
 var SNMP_PRIVPROTO = map[string]string{
-	"des":    "0",
-	"aes":    "1",
-	"aes192": "2",
-	"aes256": "3",
+	"des":     "0",
+	"aes":     "1",
+	"aes192":  "2",
+	"aes256":  "3",
 	"aes192c": "4",
 	"aes256c": "5",
 }

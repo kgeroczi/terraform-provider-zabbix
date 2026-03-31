@@ -3,8 +3,8 @@ package provider
 import (
 	"errors"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/kgeroczi/go-zabbix-api"
 )
 
@@ -141,10 +141,10 @@ func resourceUserGroupCreate(d *schema.ResourceData, m interface{}) error {
 	api := m.(*zabbix.API)
 
 	item := zabbix.UserGroup{
-		Name:        d.Get("name").(string),
-		DebugMode:   d.Get("debug_mode").(int),
-		GUIAccess:   d.Get("gui_access").(int),
-		Status:      d.Get("status").(int),
+		Name:                     d.Get("name").(string),
+		DebugMode:                d.Get("debug_mode").(int),
+		GUIAccess:                d.Get("gui_access").(int),
+		Status:                   d.Get("status").(int),
 		Permissions:              resourceHostGroupPermissionsV1(d),
 		TemplateGroupPermissions: resourceTemplateGroupPermissionsV1(d),
 	}
@@ -217,11 +217,11 @@ func resourceUserGroupUpdate(d *schema.ResourceData, m interface{}) error {
 	api := m.(*zabbix.API)
 
 	item := zabbix.UserGroup{
-		UserGroupID: d.Id(),
-		Name:        d.Get("name").(string),
-		DebugMode:   d.Get("debug_mode").(int),
-		GUIAccess:   d.Get("gui_access").(int),
-		Status:      d.Get("status").(int),
+		UserGroupID:              d.Id(),
+		Name:                     d.Get("name").(string),
+		DebugMode:                d.Get("debug_mode").(int),
+		GUIAccess:                d.Get("gui_access").(int),
+		Status:                   d.Get("status").(int),
 		Permissions:              resourceHostGroupPermissionsV1(d),
 		TemplateGroupPermissions: resourceTemplateGroupPermissionsV1(d),
 	}

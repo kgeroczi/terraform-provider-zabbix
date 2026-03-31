@@ -3,8 +3,8 @@ package provider
 import (
 	"errors"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	"github.com/kgeroczi/go-zabbix-api"
 )
@@ -146,16 +146,16 @@ func resourceProxyCreate(d *schema.ResourceData, m interface{}) error {
 	api := m.(*zabbix.API)
 
 	proxy := zabbix.Proxy{
-		ProxyID:        d.Id(),
-		Name:           d.Get("name").(string),
-		OperatingMode:  d.Get("operating_mode").(int),
-		Description:    d.Get("description").(string),
-		TLSConnect:     d.Get("tls_connect").(int),
-		TLSAccept:      d.Get("tls_accept").(int),
-		TLSIssuer:      d.Get("tls_issuer").(string),
-		TLSSubject:     d.Get("tls_subject").(string),
-		TLSPSKIdentity: d.Get("tls_psk_identity").(string),
-		TLSPSK:         d.Get("tls_psk").(string),
+		ProxyID:          d.Id(),
+		Name:             d.Get("name").(string),
+		OperatingMode:    d.Get("operating_mode").(int),
+		Description:      d.Get("description").(string),
+		TLSConnect:       d.Get("tls_connect").(int),
+		TLSAccept:        d.Get("tls_accept").(int),
+		TLSIssuer:        d.Get("tls_issuer").(string),
+		TLSSubject:       d.Get("tls_subject").(string),
+		TLSPSKIdentity:   d.Get("tls_psk_identity").(string),
+		TLSPSK:           d.Get("tls_psk").(string),
 		AllowedAddresses: proxyGetAllowedAddresses(d),
 		Address:          d.Get("address").(string),
 		Port:             d.Get("port").(string),
@@ -238,16 +238,16 @@ func resourceProxyUpdate(d *schema.ResourceData, m interface{}) error {
 	api := m.(*zabbix.API)
 
 	proxy := zabbix.Proxy{
-		ProxyID:        d.Id(),
-		Name:           d.Get("name").(string),
-		OperatingMode:  d.Get("operating_mode").(int),
-		Description:    d.Get("description").(string),
-		TLSConnect:     d.Get("tls_connect").(int),
-		TLSAccept:      d.Get("tls_accept").(int),
-		TLSIssuer:      d.Get("tls_issuer").(string),
-		TLSSubject:     d.Get("tls_subject").(string),
-		TLSPSKIdentity: d.Get("tls_psk_identity").(string),
-		TLSPSK:         d.Get("tls_psk").(string),
+		ProxyID:          d.Id(),
+		Name:             d.Get("name").(string),
+		OperatingMode:    d.Get("operating_mode").(int),
+		Description:      d.Get("description").(string),
+		TLSConnect:       d.Get("tls_connect").(int),
+		TLSAccept:        d.Get("tls_accept").(int),
+		TLSIssuer:        d.Get("tls_issuer").(string),
+		TLSSubject:       d.Get("tls_subject").(string),
+		TLSPSKIdentity:   d.Get("tls_psk_identity").(string),
+		TLSPSK:           d.Get("tls_psk").(string),
 		AllowedAddresses: proxyGetAllowedAddresses(d),
 		Address:          d.Get("address").(string),
 		Port:             d.Get("port").(string),

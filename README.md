@@ -22,6 +22,12 @@ A [Terraform](terraform.io) provider for [Zabbix](https://www.zabbix.com)
 * [zabbix_hostgroup](#zabbix_hostgroup)
 * [zabbix_template](#zabbix_template)
 * [zabbix_template_group](#zabbix_template_group)
+* [zabbix_sla](#zabbix_sla)
+* [zabbix_service](#zabbix_service)
+* [zabbix_report](#zabbix_report)
+* [zabbix_proxy](#zabbix_proxy)
+* [zabbix_user](#zabbix_user)
+* [zabbix_user_group](#zabbix_user_group)
 * [zabbix_graph / zabbix_proto_graph](#zabbix_graph--zabbix_proto_graph)
 * [zabbix_trigger / zabbix_proto_trigger](#zabbix_trigger--zabbix_proto_trigger)
 * [zabbix_item_agent / zabbix_proto_item_agent](#zabbix_item_agent--zabbix_proto_item_agent)
@@ -68,8 +74,21 @@ To run acceptance tests locally:
 export ZABBIX_URL=http://localhost:8080/zabbix/api_jsonrpc.php
 export ZABBIX_USER=Admin
 export ZABBIX_PASSWORD=zabbix
+# required for report acceptance tests
+export ZABBIX_TEST_REPORT_USERID=1
+export ZABBIX_TEST_REPORT_DASHBOARDID=10001
 export TF_ACC=1
 go test -v ./provider/...
+```
+
+# Documentation
+
+Provider docs are generated from the resource/data source schemas into `docs/`.
+
+To regenerate docs locally:
+
+```bash
+go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@v0.20.1 generate
 ```
 
 # Usage

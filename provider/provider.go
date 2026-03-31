@@ -1,9 +1,8 @@
 package provider
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-	"github.com/hashicorp/terraform/helper/hashcode"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/kgeroczi/go-zabbix-api"
 )
 
@@ -68,12 +67,15 @@ func Provider() *schema.Provider {
 			"zabbix_user":           dataUser(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"zabbix_trigger":       resourceTrigger(),
-			"zabbix_proto_trigger": resourceProtoTrigger(),
-			"zabbix_template":      resourceTemplate(),
-			"zabbix_hostgroup":     resourceHostgroup(),
+			"zabbix_trigger":        resourceTrigger(),
+			"zabbix_proto_trigger":  resourceProtoTrigger(),
+			"zabbix_template":       resourceTemplate(),
+			"zabbix_hostgroup":      resourceHostgroup(),
 			"zabbix_host":           resourceHost(),
 			"zabbix_template_group": resourceTemplateGroup(),
+			"zabbix_sla":            resourceSLA(),
+			"zabbix_service":        resourceService(),
+			"zabbix_report":         resourceReport(),
 
 			"zabbix_graph":       resourceGraph(),
 			"zabbix_proto_graph": resourceProtoGraph(),
@@ -169,7 +171,7 @@ func tagGenerate(d *schema.ResourceData) (tags zabbix.Tags) {
 func flattenTags(list zabbix.Tags) *schema.Set {
 	set := schema.NewSet(func(i interface{}) int {
 		m := i.(map[string]interface{})
-		return hashcode.String(m["key"].(string) + "V" + m["value"].(string))
+		return schema.HashString(m["key"].(string) + "V" + m["value"].(string))
 	}, []interface{}{})
 	for i := 0; i < len(list); i++ {
 		set.Add(map[string]interface{}{

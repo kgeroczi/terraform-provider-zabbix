@@ -6,9 +6,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-	"github.com/hashicorp/terraform/helper/hashcode"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/kgeroczi/go-zabbix-api"
 )
 
@@ -453,7 +452,7 @@ func flattenlldPreprocessors(lld zabbix.LLDRule) []interface{} {
 func flattenlldMacroPaths(lld zabbix.LLDRule) *schema.Set {
 	set := schema.NewSet(func(i interface{}) int {
 		m := i.(map[string]interface{})
-		return hashcode.String(m["macro"].(string) + "P" + m["path"].(string))
+		return schema.HashString(m["macro"].(string) + "P" + m["path"].(string))
 	}, []interface{}{})
 	for i := 0; i < len(lld.MacroPaths); i++ {
 		set.Add(map[string]interface{}{
