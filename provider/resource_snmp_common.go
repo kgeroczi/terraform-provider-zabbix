@@ -87,6 +87,7 @@ var schemaSnmp = map[string]*schema.Schema{
 		Description:  "SNMP Community (v1/v2 only)",
 		ValidateFunc: validation.StringIsNotWhiteSpace,
 		Default:      "{$SNMP_COMMUNITY}",
+		Sensitive:    true,
 	},
 	"snmp3_authpassphrase": &schema.Schema{
 		Type:         schema.TypeString,
@@ -94,6 +95,7 @@ var schemaSnmp = map[string]*schema.Schema{
 		Description:  "Authentication Passphrase (v3 only)",
 		ValidateFunc: validation.StringIsNotWhiteSpace,
 		Default:      "{$SNMP3_AUTHPASSPHRASE}",
+		Sensitive:    true,
 	},
 	"snmp3_authprotocol": &schema.Schema{
 		Type:         schema.TypeString,
@@ -115,6 +117,7 @@ var schemaSnmp = map[string]*schema.Schema{
 		Description:  "Priv Passphrase (v3 only)",
 		ValidateFunc: validation.StringIsNotWhiteSpace,
 		Default:      "{$SNMP3_PRIVPASSPHRASE}",
+		Sensitive:    true,
 	},
 	"snmp3_privprotocol": &schema.Schema{
 		Type:         schema.TypeString,

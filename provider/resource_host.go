@@ -283,6 +283,7 @@ var hostSchemaBase = map[string]*schema.Schema{
 					Description:  "HSNMP Community (v1/v2 only)",
 					ValidateFunc: validation.StringIsNotWhiteSpace,
 					Default:      "{$SNMP_COMMUNITY}",
+					Sensitive:    true,
 				},
 				"snmp3_authpassphrase": &schema.Schema{
 					Type:         schema.TypeString,
@@ -290,6 +291,7 @@ var hostSchemaBase = map[string]*schema.Schema{
 					Description:  "Authentication Passphrase (v3 only)",
 					ValidateFunc: validation.StringIsNotWhiteSpace,
 					Default:      "{$SNMP3_AUTHPASSPHRASE}",
+					Sensitive:    true,
 				},
 				"snmp3_authprotocol": &schema.Schema{
 					Type:         schema.TypeString,
@@ -311,6 +313,7 @@ var hostSchemaBase = map[string]*schema.Schema{
 					Description:  "Priv Passphrase (v3 only)",
 					ValidateFunc: validation.StringIsNotWhiteSpace,
 					Default:      "{$SNMP3_PRIVPASSPHRASE}",
+					Sensitive:    true,
 				},
 				"snmp3_privprotocol": &schema.Schema{
 					Type:         schema.TypeString,
@@ -415,7 +418,7 @@ func hostResourceSchema(m map[string]*schema.Schema) (o map[string]*schema.Schem
 
 	o["proxyid"].ValidateFunc = validation.StringIsNotWhiteSpace
 	o["proxyid"].Default = "0"
-	o["monitored_by"].Default = "1"
+	o["monitored_by"].Default = "0"
 	return o
 }
 

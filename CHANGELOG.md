@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## [v0.3.2] - 2026-04-20
+
+### Changed
+- Upgraded `github.com/kgeroczi/go-zabbix-api` to `v0.3.2`.
+
+### Fixed
+- Improved compatibility with Zabbix 7.x JSON payload/response formats by consuming go-zabbix-api `v0.3.2` model fixes:
+  - String-backed numeric field decoding for macros, services, and SLAs.
+  - Correct host group payload field mapping for host create/update requests.
+  - Required SLA payload field handling for `service_tags` and `effective_date`.
+  - Item payload cleanup for optional fields not accepted by all item types.
+- Provider-side defaults and schemas adjusted for more predictable create payloads:
+  - `monitored_by` default set to server mode.
+  - Removed invalid default `interfaceid` value for item resources.
+  - Marked SNMP passphrase/secret-like fields as sensitive in host/SNMP schemas.
+
+### Validation
+- go test -mod=mod ./... passes.
+- terraform -chdir=terraform_local validate passes with local development override.
+
 ## [v0.3.1] - 2026-03-31
 
 ### Added

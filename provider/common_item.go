@@ -115,7 +115,6 @@ var itemInterfaceSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Optional:    true,
 		Description: "Host Interface ID",
-		Default:     "0",
 	},
 }
 
